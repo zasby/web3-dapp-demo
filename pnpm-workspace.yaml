@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Native addons with pure-JS fallbacks (pulled in by WalletConnect) — no need to compile them.
+allowBuilds:
+  bufferutil: false
+  keccak: false
+  utf-8-validate: false
