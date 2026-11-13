@@ -2,6 +2,7 @@ import { type Address, erc20Abi } from 'viem'
 import { useReadContracts } from 'wagmi'
 
 import type { SupportedChainId } from '../config/chains'
+import { isContractFailure } from '../lib/errors'
 
 export type TokenBalance = {
   address: Address
@@ -16,6 +17,8 @@ export type TokenRow =
   | { status: 'loading'; address: Address }
   /** The calls reverted or returned garbage: most likely not an ERC-20 contract. */
   | { status: 'invalid'; address: Address }
+  /** The RPC node failed (down, rate-limited): says nothing about the token. */
+  | { status: 'unavailable'; address: Address; error: unknown }
 
 const CALLS_PER_TOKEN = 4
 
@@ -33,9 +36,11 @@ export function useTokenBalances(owner: Address, chainId: SupportedChainId, toke
 
   const rows = tokens.map((address, index): TokenRow => {
     if (!data) return { status: 'loading', address }
-    const [symbol, name, decimals, balance] = data
-      .slice(index * CALLS_PER_TOKEN, (index + 1) * CALLS_PER_TOKEN)
-      .map((call) => call.result)
+    const calls = data.slice(index * CALLS_PER_TOKEN, (index + 1) * CALLS_PER_TOKEN)
+    const failure = calls.find((call) => call.status === 'failure' && !isContractFailure(call.error))
+    if (failure) return { status: 'unavailable', address, error: failure.error }
+
+    const [symbol, name, decimals, balance] = calls.map((call) => call.result)
     if (typeof symbol !== 'string' || typeof decimals !== 'number' || typeof balance !== 'bigint') {
       return { status: 'invalid', address }
     }

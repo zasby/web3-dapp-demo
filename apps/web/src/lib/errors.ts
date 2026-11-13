@@ -1,4 +1,12 @@
-import { BaseError, HttpRequestError, UserRejectedRequestError } from 'viem'
+import {
+  AbiDecodingDataSizeTooSmallError,
+  AbiDecodingZeroDataError,
+  BaseError,
+  ContractFunctionRevertedError,
+  ContractFunctionZeroDataError,
+  HttpRequestError,
+  UserRejectedRequestError,
+} from 'viem'
 
 export function isUserRejection(error: unknown): boolean {
   return error instanceof BaseError && error.walk((cause) => cause instanceof UserRejectedRequestError) !== null
@@ -16,4 +24,21 @@ export function getErrorMessage(error: unknown): string {
     return typeof shortMessage === 'string' ? shortMessage : error.message
   }
   return 'Something went wrong'
+}
+
+/**
+ * True when a contract call failed because of the contract (no code at the address, a revert,
+ * data that does not decode), not because the RPC node was unreachable or rate-limited.
+ */
+export function isContractFailure(error: unknown): boolean {
+  return (
+    error instanceof BaseError &&
+    error.walk(
+      (cause) =>
+        cause instanceof ContractFunctionZeroDataError ||
+        cause instanceof ContractFunctionRevertedError ||
+        cause instanceof AbiDecodingZeroDataError ||
+        cause instanceof AbiDecodingDataSizeTooSmallError,
+    ) !== null
+  )
 }

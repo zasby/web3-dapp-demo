@@ -12,7 +12,7 @@ import { TokenBalances } from './TokenBalances'
 export function ChainAssets({ address, chain }: { address: Address; chain: SupportedChain }) {
   const customTokens = useCustomTokens(chain.id)
   const tokenAddresses = [...(knownTokens[chain.id] ?? []), ...customTokens.tokens]
-  const { rows, error } = useTokenBalances(address, chain.id, tokenAddresses)
+  const { rows, error, isFetching, refetch } = useTokenBalances(address, chain.id, tokenAddresses)
 
   return (
     <>
@@ -20,6 +20,8 @@ export function ChainAssets({ address, chain }: { address: Address; chain: Suppo
       <TokenBalances
         rows={rows}
         error={error}
+        isFetching={isFetching}
+        onRetry={() => void refetch()}
         customTokens={customTokens.tokens}
         onAdd={customTokens.add}
         onRemove={customTokens.remove}

@@ -8,12 +8,14 @@ import { formatTokenAmount, shortenAddress } from '../lib/format'
 type Props = {
   rows: TokenRow[]
   error: unknown
+  isFetching: boolean
+  onRetry: () => void
   customTokens: readonly Address[]
   onAdd: (address: Address) => void
   onRemove: (address: Address) => void
 }
 
-export function TokenBalances({ rows, error, customTokens, onAdd, onRemove }: Props) {
+export function TokenBalances({ rows, error, isFetching, onRetry, customTokens, onAdd, onRemove }: Props) {
   const [input, setInput] = useState('')
   const [inputError, setInputError] = useState<string>()
 
@@ -30,6 +32,7 @@ export function TokenBalances({ rows, error, customTokens, onAdd, onRemove }: Pr
   }
 
   const failedToLoad = Boolean(error) && rows.every((row) => row.status === 'loading')
+  const unavailable = rows.find((row) => row.status === 'unavailable')
 
   return (
     <section className="card" aria-labelledby="tokens-title">
@@ -41,6 +44,15 @@ export function TokenBalances({ rows, error, customTokens, onAdd, onRemove }: Pr
         <p role="alert" className="notice notice--error">
           Could not load token balances: {getErrorMessage(error)}
         </p>
+      )}
+
+      {unavailable && (
+        <div role="alert" className="notice notice--warning tx-status">
+          <span>Some balances could not be loaded: {getErrorMessage(unavailable.error)}</span>
+          <button type="button" className="button button--ghost" onClick={onRetry} disabled={isFetching}>
+            {isFetching ? 'Retrying…' : 'Retry'}
+          </button>
+        </div>
       )}
 
       {rows.length === 0 ? (
@@ -56,7 +68,7 @@ export function TokenBalances({ rows, error, customTokens, onAdd, onRemove }: Pr
                   <span className="token-row__main">
                     <span className="token-row__symbol">{label}</span>
                     <span className="token-row__name">
-                      {row.status === 'loaded' ? row.name : row.status === 'loading' ? 'Loading…' : 'Not an ERC-20 token'}
+                      {rowCaption(row)}
                     </span>
                   </span>
                   <span className="token-row__balance">
@@ -100,4 +112,17 @@ export function TokenBalances({ rows, error, customTokens, onAdd, onRemove }: Pr
       {inputError && <p className="form__error">{inputError}</p>}
     </section>
   )
+}
+
+function rowCaption(row: TokenRow): string {
+  switch (row.status) {
+    case 'loaded':
+      return row.name
+    case 'loading':
+      return 'Loading…'
+    case 'invalid':
+      return 'Not an ERC-20 token'
+    case 'unavailable':
+      return 'Could not load'
+  }
 }

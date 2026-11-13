@@ -1,7 +1,15 @@
-import { BaseError, HttpRequestError, UserRejectedRequestError } from 'viem'
+import {
+  AbiDecodingZeroDataError,
+  BaseError,
+  ContractFunctionExecutionError,
+  ContractFunctionZeroDataError,
+  erc20Abi,
+  HttpRequestError,
+  UserRejectedRequestError,
+} from 'viem'
 import { describe, expect, it } from 'vitest'
 
-import { getErrorMessage } from './errors'
+import { getErrorMessage, isContractFailure } from './errors'
 
 describe('getErrorMessage', () => {
   it('recognizes a rejection anywhere in the cause chain', () => {
@@ -26,5 +34,21 @@ describe('getErrorMessage', () => {
   it('falls back to message and to a generic text', () => {
     expect(getErrorMessage(new Error('boom'))).toBe('boom')
     expect(getErrorMessage('boom')).toBe('Something went wrong')
+  })
+})
+
+describe('isContractFailure', () => {
+  const call = { abi: erc20Abi, functionName: 'symbol' } as const
+
+  it('blames the contract for calls that return no data', () => {
+    const error = new ContractFunctionExecutionError(new ContractFunctionZeroDataError(call), call)
+    expect(isContractFailure(error)).toBe(true)
+    expect(isContractFailure(new BaseError('decode', { cause: new AbiDecodingZeroDataError() }))).toBe(true)
+  })
+
+  it('does not blame the contract for network failures', () => {
+    const error = new ContractFunctionExecutionError(new HttpRequestError({ url: 'https://rpc.example' }), call)
+    expect(isContractFailure(error)).toBe(false)
+    expect(isContractFailure(new Error('boom'))).toBe(false)
   })
 })
