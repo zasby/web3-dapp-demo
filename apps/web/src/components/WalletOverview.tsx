@@ -4,6 +4,7 @@ import { ChainAssets } from './ChainAssets'
 import { CopyButton } from './CopyButton'
 import { NativeBalance } from './NativeBalance'
 import { NetworkSwitcher } from './NetworkSwitcher'
+import { SessionCard } from './SessionCard'
 
 export function WalletOverview() {
   const { address, chain, chainId, connector } = useAccount()
@@ -42,6 +43,8 @@ export function WalletOverview() {
 
         <NetworkSwitcher currentChainId={chainId} />
       </section>
+
+      <SessionCard />
 
       {chain && <ChainAssets key={chain.id} address={address} chain={chain} />}
     </>

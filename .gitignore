@@ -16,3 +16,5 @@ playwright-report
 .next-e2e
 next-env.d.ts
 *.tsbuildinfo
+dist
+dist-e2e

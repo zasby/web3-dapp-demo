@@ -5,6 +5,7 @@ import { card, connectMockWallet, expect, switchNetwork, test } from './fixtures
 test.describe('public testnets', { tag: '@network' }, () => {
   test('shows ERC-20 balances and pages through NFTs on Sepolia', async ({ page }) => {
     await connectMockWallet(page)
+    await switchNetwork(page, 'Sepolia')
 
     const tokens = card(page, /^Tokens/)
     for (const symbol of ['USDC', 'EURC', 'LINK', 'WETH']) {
@@ -30,6 +31,7 @@ test.describe('public testnets', { tag: '@network' }, () => {
 
   test('shows a failed transaction when the wallet cannot send it', async ({ page }) => {
     await connectMockWallet(page)
+    await switchNetwork(page, 'Sepolia')
     const send = card(page, /^Send/)
 
     await send.getByRole('textbox', { name: 'Recipient' }).fill('0x000000000000000000000000000000000000dEaD')

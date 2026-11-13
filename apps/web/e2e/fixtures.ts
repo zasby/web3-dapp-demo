@@ -25,16 +25,23 @@ export { expect }
 
 export const anvil = createTestClient({ mode: 'anvil', chain: foundry, transport: http() }).extend(publicActions)
 
-export async function connectMockWallet(page: Page) {
+/** Anvil's first default account: the anvil dev wallet signs for it. */
+export const ANVIL_ACCOUNT_0 = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+
+/** Connects a dev wallet; with the local chain enabled it lands on anvil. */
+export async function connectMockWallet(page: Page, wallet = { name: 'Mock wallet (dev)', address: MOCK_ADDRESS }) {
   await page.goto('/')
   await page.getByRole('button', { name: 'Connect Wallet' }).click()
-  await page.getByText('Mock wallet (dev)').click()
-  await expect(page.getByTestId('wallet-address')).toHaveText(MOCK_ADDRESS)
+  await page.getByText(wallet.name).click()
+  await expect(page.getByTestId('wallet-address')).toHaveText(wallet.address)
 }
+
+export const connectAnvilWallet = (page: Page) =>
+  connectMockWallet(page, { name: 'Anvil account #0 (dev)', address: ANVIL_ACCOUNT_0 })
 
 export async function switchNetwork(page: Page, name: string) {
   const button = page.getByRole('group', { name: 'Switch network' }).getByRole('button', { name, exact: true })
-  await button.click()
+  if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click()
   await expect(button).toHaveAttribute('aria-pressed', 'true')
 }
 

@@ -1,13 +1,16 @@
 'use client'
 
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { useAccount } from 'wagmi'
+import { useAccount, useAccountEffect } from 'wagmi'
 
 import { WalletOverview } from './WalletOverview'
 import { supportedChains } from '../config/chains'
+import { signOut } from '../lib/authApi'
 
 export function Home() {
   const { status } = useAccount()
+  // A session must not outlive the wallet that signed it in.
+  useAccountEffect({ onDisconnect: () => void signOut().catch(() => {}) })
 
   return (
     <div className="layout">

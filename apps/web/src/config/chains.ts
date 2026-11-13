@@ -38,7 +38,7 @@ export const localChain = defineChain({ ...foundry, name: 'Anvil (local)' })
 export { baseSepolia }
 
 const testnets = [sepolia, baseSepolia, filecoinCalibration] as const
-const isLocalChainEnabled =
+export const isLocalChainEnabled =
   process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_LOCAL_CHAIN === 'true'
 
 /** Testnets only: the app never touches mainnet funds. */
@@ -46,7 +46,8 @@ export const supportedChains = isLocalChainEnabled ? ([...testnets, localChain] 
 
 export type SupportedChainId = (typeof supportedChains)[number]['id']
 
-export const defaultChain = sepolia
+/** Wallets connect here first; with the local chain on, that is anvil, where dev accounts can sign. */
+export const defaultChain = isLocalChainEnabled ? localChain : sepolia
 
 export const faucetUrls: Partial<Record<SupportedChainId, string>> = {
   [sepolia.id]: 'https://cloud.google.com/application/web3/faucet/ethereum/sepolia',

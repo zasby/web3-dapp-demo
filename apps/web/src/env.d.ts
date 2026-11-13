@@ -1,5 +1,7 @@
 declare namespace NodeJS {
   interface ProcessEnv {
+    /** Server only: where /api/* is proxied (the NestJS API). Default http://localhost:4000. */
+    readonly API_URL?: string
     /** Reown (WalletConnect) Cloud project id. Without it only browser-extension wallets are offered. */
     readonly NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?: string
     /** Optional private Sepolia RPC (Alchemy, Infura, …). Public RPCs are used as a fallback. */
