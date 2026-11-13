@@ -10,7 +10,14 @@ import { type Address, isAddress } from 'viem'
 import { createConfig, createConnector, fallback, http } from 'wagmi'
 import { mock } from 'wagmi/connectors'
 
-import { baseSepolia, filecoinCalibration, sepolia, supportedChains } from './chains'
+import {
+  baseSepolia,
+  filecoinCalibration,
+  localChain,
+  sepolia,
+  sepoliaPublicRpcUrls,
+  supportedChains,
+} from './chains'
 
 const APP_NAME = 'web3 dApp demo'
 
@@ -62,6 +69,8 @@ if (import.meta.env.DEV && mockAddress) {
   }
 }
 
+const sepoliaPublicTransports = sepoliaPublicRpcUrls.map((url) => http(url))
+
 const connectors = connectorsForWallets(walletList, {
   appName: APP_NAME,
   projectId: projectId ?? 'not-configured',
@@ -71,9 +80,13 @@ export const config = createConfig({
   chains: supportedChains,
   connectors,
   transports: {
-    [sepolia.id]: sepoliaRpcUrl ? fallback([http(sepoliaRpcUrl), http()]) : http(),
+    // A private RPC goes first; public ones are re-ranked every minute by latency and uptime.
+    [sepolia.id]: sepoliaRpcUrl
+      ? fallback([http(sepoliaRpcUrl), ...sepoliaPublicTransports])
+      : fallback(sepoliaPublicTransports, { rank: { interval: 60_000 } }),
     [baseSepolia.id]: http(),
     [filecoinCalibration.id]: http(),
+    [localChain.id]: http(),
   },
 })
 

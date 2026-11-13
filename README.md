@@ -7,7 +7,7 @@ Only testnets are used, so no real funds are ever at risk.
 ## Roadmap
 
 - [x] **1. Wallet** — connect MetaMask / any EVM wallet (RainbowKit), switch networks, show the address and the native balance.
-- [ ] **2. Tokens and transactions** — ERC-20 and ERC-721 holdings, sending a transaction with pending → confirmed → failed states.
+- [x] **2. Tokens and transactions** — ERC-20 balances read on-chain in one multicall (plus custom tokens by address), ERC-721 gallery, sending ETH or ERC-20 with pending → confirmed → failed states.
 - [ ] **3. Sign-In with Ethereum** — SIWE message signing, signature verification on a NestJS backend.
 - [ ] **4. Own contract** — Solidity + Foundry: tests, deployment to Sepolia, calls from the UI, event subscriptions.
 - [ ] **5. Indexer** — Node.js + PostgreSQL event indexer, live feed over WebSocket, deployment.
@@ -17,8 +17,10 @@ Only testnets are used, so no real funds are ever at risk.
 | Part | Tech |
 | --- | --- |
 | Web app (`apps/web`) | React 19, TypeScript, Vite, wagmi 2, viem 2, RainbowKit 2, TanStack Query |
-| Tooling | pnpm workspaces, oxlint, Vitest |
-| Networks | Sepolia, Base Sepolia, Filecoin Calibration (FEVM) |
+| Local chain | anvil (Foundry) from npm |
+| Tests | Vitest (unit), Playwright with a mock wallet (e2e) |
+| Tooling | pnpm workspaces, oxlint |
+| Networks | Sepolia, Base Sepolia, Filecoin Calibration (FEVM), local anvil in development |
 
 wagmi stays on v2 because RainbowKit 2 does not support wagmi 3 yet.
 
@@ -34,32 +36,73 @@ pnpm dev
 
 The app runs at http://localhost:5173.
 
+### Local chain
+
+```bash
+pnpm chain
+```
+
+starts anvil at `http://127.0.0.1:8545` (chain id 31337) with 2-second blocks, so the pending state of a
+transaction is visible. Set `VITE_LOCAL_CHAIN=true` to add it to the network list. anvil runs with
+`--auto-impersonate`, so the mock wallet can send from any address. Give it 100 ETH with
+
+```bash
+curl -s http://127.0.0.1:8545 -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"anvil_setBalance","params":["<address>","0x56BC75E2D63100000"]}'
+```
+
+or use one of the pre-funded anvil accounts it prints on start.
+
 ### Environment variables (`apps/web/.env.local`)
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `VITE_WALLETCONNECT_PROJECT_ID` | no | [Reown](https://dashboard.reown.com) project id. Enables WalletConnect (QR code, mobile wallets), MetaMask, Rabby and Coinbase Wallet entries. Without it only the browser-extension wallet is offered. |
-| `VITE_SEPOLIA_RPC_URL` | no | Private Sepolia RPC (Alchemy, Infura, …). The public node is used as a fallback. |
-| `VITE_MOCK_WALLET_ADDRESS` | no | Dev only. Adds a read-only **Mock wallet (dev)** to the connect modal that pretends to own this address — handy for checking the UI without a browser wallet and for e2e tests. It cannot sign and is not remembered across reloads. |
+| `VITE_SEPOLIA_RPC_URL` | recommended | Private Sepolia RPC (Alchemy, Infura, …; free tiers are enough). Keyless public Sepolia nodes throttle and go down often; they are only a fallback. |
+| `VITE_MOCK_WALLET_ADDRESS` | no | Dev only. Adds a read-only **Mock wallet (dev)** to the connect modal that pretends to own this address — for checking the UI without a browser wallet and for e2e tests. It cannot sign on public networks and is not remembered across reloads. |
+| `VITE_LOCAL_CHAIN` | no | Dev only. `true` adds the local anvil chain to the network list. |
 
 ### Test funds
 
 The app links to a faucet when the balance is zero: [Sepolia](https://cloud.google.com/application/web3/faucet/ethereum/sepolia),
 [Base Sepolia](https://docs.base.org/base-chain/tools/network-faucets),
-[Filecoin Calibration](https://faucet.calibnet.chainsafe-fil.io).
+[Filecoin Calibration](https://faucet.calibnet.chainsafe-fil.io). Test USDC and EURC come from the [Circle faucet](https://faucet.circle.com).
 
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
 | `pnpm dev` | Start the web app |
+| `pnpm chain` | Start the local anvil node |
 | `pnpm typecheck` | `tsc -b` in every package |
 | `pnpm lint` | oxlint in every package |
 | `pnpm test` | Vitest in every package |
+| `pnpm e2e` | Playwright e2e tests (see below) |
+
+## Testing
+
+Unit tests cover amount parsing and formatting, error messages, transaction stages, the Blockscout response
+parser and the chain and token config.
+
+End-to-end tests drive the real app in Google Chrome (`channel: 'chrome'`, no browser download) with the mock
+wallet. Playwright starts anvil and a Vite server on port 5174 by itself.
+
+```bash
+pnpm --filter web e2e:local   # deterministic: anvil only
+pnpm e2e                      # also the @network tests against Sepolia, Calibration and Blockscout
+```
 
 ## Notes
 
-- viem's default Sepolia RPC (thirdweb) rate-limits keyless browser requests and returns the 429
-  without CORS headers, so the Sepolia chain definition is overridden with a public node
-  (`apps/web/src/config/chains.ts`). The override also matters for `wallet_addEthereumChain`.
+- **Public RPCs.** viem's default Sepolia RPC (thirdweb) rate-limits keyless browser requests and returns the 429
+  without CORS headers, so the Sepolia chain definition uses public nodes instead, and the transport falls back
+  between them, re-ranking them by latency and uptime every minute (`apps/web/src/config`). The default RPC
+  also matters for `wallet_addEthereumChain`.
+- **Multicall3 on Calibration.** viem does not list it for Filecoin Calibration, although it is deployed at the
+  canonical address; the chain definition adds it so token balances load in one request.
+- **Simulate before writing.** wagmi's `writeContract` does not simulate the call, so ERC-20 transfers run
+  `simulateContract` first: a transfer that would revert fails before the wallet asks to sign it.
+- **NFTs need an indexer.** An RPC node cannot list the tokens an address owns, and public nodes cap
+  `eth_getLogs` at a few dozen blocks, so the gallery uses the keyless Blockscout API. Stage 5 replaces it
+  with an own indexer.
 - Balances are truncated, not rounded, so the UI never shows more than the wallet holds.

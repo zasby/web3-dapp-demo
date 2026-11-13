@@ -1,7 +1,7 @@
 import { parseEther } from 'viem'
 import { describe, expect, it } from 'vitest'
 
-import { formatTokenAmount, shortenAddress } from './format'
+import { formatTokenAmount, parseTokenAmount, shortenAddress, shortenTokenId } from './format'
 
 describe('shortenAddress', () => {
   it('keeps the 0x prefix and the given number of chars on both sides', () => {
@@ -36,5 +36,33 @@ describe('formatTokenAmount', () => {
 
   it('works with non-18 decimals', () => {
     expect(formatTokenAmount(1_500_000n, 6)).toBe('1.5')
+  })
+})
+
+describe('parseTokenAmount', () => {
+  it('parses plain decimals', () => {
+    expect(parseTokenAmount('1.5', 18)).toBe(parseEther('1.5'))
+    expect(parseTokenAmount(' 2 ', 6)).toBe(2_000_000n)
+    expect(parseTokenAmount('.5', 6)).toBe(500_000n)
+    expect(parseTokenAmount('3.', 6)).toBe(3_000_000n)
+    expect(parseTokenAmount('0', 6)).toBe(0n)
+  })
+
+  it('rejects anything that is not a plain decimal', () => {
+    for (const input of ['', '.', 'abc', '1,5', '-1', '1e18', '1.2.3', '0x10']) {
+      expect(parseTokenAmount(input, 18)).toBeUndefined()
+    }
+  })
+
+  it('rejects more fraction digits than the token has', () => {
+    expect(parseTokenAmount('1.1234567', 6)).toBeUndefined()
+    expect(parseTokenAmount('1.123456', 6)).toBe(1_123_456n)
+  })
+})
+
+describe('shortenTokenId', () => {
+  it('keeps short ids and shortens long ones', () => {
+    expect(shortenTokenId('7981')).toBe('7981')
+    expect(shortenTokenId('123801297245000000001')).toBe('1238…0001')
   })
 })

@@ -2,8 +2,10 @@ packages:
   - apps/*
   - packages/*
 
-# Native addons with pure-JS fallbacks (pulled in by WalletConnect) — no need to compile them.
+# Build scripts we skip: native addons with pure-JS fallbacks (pulled in by WalletConnect) and the
+# anvil postinstall, which only re-downloads the binary that the platform package already ships.
 allowBuilds:
+  '@foundry-rs/anvil': false
   bufferutil: false
   keccak: false
   utf-8-validate: false

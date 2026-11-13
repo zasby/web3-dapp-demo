@@ -11,6 +11,8 @@
   --warning-text: #92400e;
   --error-bg: #fee2e2;
   --error-text: #991b1b;
+  --success-bg: #dcfce7;
+  --success-text: #166534;
   --radius: 14px;
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
@@ -36,6 +38,8 @@
     --warning-text: #fcd34d;
     --error-bg: #3b1515;
     --error-text: #fca5a5;
+    --success-bg: #0f2e1b;
+    --success-text: #86efac;
   }
 }
 
@@ -79,6 +83,9 @@ a {
 
 .main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .footer {
@@ -237,4 +244,220 @@ a {
   background: var(--accent-soft);
   border-color: var(--accent);
   font-weight: 600;
+}
+
+
+.field__hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.notice--info {
+  background: var(--accent-soft);
+  color: var(--text-strong);
+}
+
+.notice--success {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+/* Forms */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form__error {
+  font-size: 0.8125rem;
+  color: var(--error-text);
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--text-strong);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--error-text);
+}
+
+.input--mono {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+}
+
+.input-group,
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.button--primary,
+.button--secondary {
+  padding: 10px 16px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.button--primary {
+  color: #fff;
+  background: var(--accent);
+}
+
+.button--primary:disabled {
+  opacity: 0.5;
+}
+
+.button--secondary {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.button--secondary:disabled {
+  opacity: 0.6;
+}
+
+.tx-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  justify-content: space-between;
+}
+
+.tx-status__hash {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  word-break: break-all;
+}
+
+/* Tokens */
+
+.token-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.token-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.token-row:last-child {
+  border-bottom: none;
+}
+
+.token-row__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.token-row__symbol {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.token-row__name {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.token-row__balance {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+
+/* NFTs */
+
+.nft-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.nft-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.nft-card:hover {
+  border-color: var(--accent);
+}
+
+.nft-card__image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.nft-card__image--empty {
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.nft-card__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nft-card__collection {
+  font-size: 0.75rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nft-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
