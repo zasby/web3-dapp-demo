@@ -1,10 +1,12 @@
+'use client'
+
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount } from 'wagmi'
 
-import { WalletOverview } from './components/WalletOverview'
-import { supportedChains } from './config/chains'
+import { WalletOverview } from './WalletOverview'
+import { supportedChains } from '../config/chains'
 
-export default function App() {
+export function Home() {
   const { status } = useAccount()
 
   return (

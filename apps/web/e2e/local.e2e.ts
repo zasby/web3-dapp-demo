@@ -1,8 +1,7 @@
-import { expect, test } from '@playwright/test'
 import { parseEther } from 'viem'
 import { generatePrivateKey, privateKeyToAddress } from 'viem/accounts'
 
-import { anvil, card, connectMockWallet, MOCK_ADDRESS, switchNetwork } from './fixtures.ts'
+import { anvil, card, connectMockWallet, expect, MOCK_ADDRESS, switchNetwork, test } from './fixtures.ts'
 
 test.beforeEach(async ({ page }) => {
   await anvil.setBalance({ address: MOCK_ADDRESS, value: parseEther('100') })

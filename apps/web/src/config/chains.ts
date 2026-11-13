@@ -8,7 +8,7 @@ import {
 
 /**
  * Keyless public Sepolia RPCs. They throttle and go down regularly, so the transport falls back
- * between them (see wagmi.ts); set VITE_SEPOLIA_RPC_URL for a stable one.
+ * between them (see wagmi.ts); set NEXT_PUBLIC_SEPOLIA_RPC_URL for a stable one.
  */
 export const sepoliaPublicRpcUrls = [
   'https://ethereum-sepolia-rpc.publicnode.com',
@@ -32,13 +32,14 @@ export const filecoinCalibration = defineChain({
   contracts: { multicall3: { address: '0xcA11bde05977b3631167028862bE2a173976CA11' } },
 })
 
-/** Local anvil node (`pnpm chain`), enabled with VITE_LOCAL_CHAIN=true in development. */
+/** Local anvil node (`pnpm chain`), enabled with NEXT_PUBLIC_LOCAL_CHAIN=true in development. */
 export const localChain = defineChain({ ...foundry, name: 'Anvil (local)' })
 
 export { baseSepolia }
 
 const testnets = [sepolia, baseSepolia, filecoinCalibration] as const
-const isLocalChainEnabled = import.meta.env.DEV && import.meta.env.VITE_LOCAL_CHAIN === 'true'
+const isLocalChainEnabled =
+  process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_LOCAL_CHAIN === 'true'
 
 /** Testnets only: the app never touches mainnet funds. */
 export const supportedChains = isLocalChainEnabled ? ([...testnets, localChain] as const) : testnets

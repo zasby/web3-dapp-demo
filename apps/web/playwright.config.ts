@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 import { MOCK_ADDRESS } from './e2e/fixtures.ts'
 
-const PORT = 5174
+const PORT = 3100
 
 export default defineConfig({
   testDir: './e2e',
@@ -21,10 +21,15 @@ export default defineConfig({
   webServer: [
     { command: 'pnpm --dir ../.. chain', port: 8545, reuseExistingServer: true },
     {
-      command: `pnpm exec vite --port ${PORT} --strictPort`,
+      command: `pnpm exec next dev --port ${PORT}`,
       port: PORT,
       reuseExistingServer: !process.env.CI,
-      env: { VITE_MOCK_WALLET_ADDRESS: MOCK_ADDRESS, VITE_LOCAL_CHAIN: 'true' },
+      timeout: 120_000,
+      env: {
+        NEXT_DIST_DIR: '.next-e2e',
+        NEXT_PUBLIC_MOCK_WALLET_ADDRESS: MOCK_ADDRESS,
+        NEXT_PUBLIC_LOCAL_CHAIN: 'true',
+      },
     },
   ],
 })

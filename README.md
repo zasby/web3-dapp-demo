@@ -16,7 +16,7 @@ Only testnets are used, so no real funds are ever at risk.
 
 | Part | Tech |
 | --- | --- |
-| Web app (`apps/web`) | React 19, TypeScript, Vite, wagmi 2, viem 2, RainbowKit 2, TanStack Query |
+| Web app (`apps/web`) | Next.js 16 (App Router, Turbopack), React 19, TypeScript, wagmi 2, viem 2, RainbowKit 2, TanStack Query |
 | Local chain | anvil (Foundry) from npm |
 | Tests | Vitest (unit), Playwright with a mock wallet (e2e) |
 | Tooling | pnpm workspaces, oxlint |
@@ -34,7 +34,7 @@ cp apps/web/.env.example apps/web/.env.local
 pnpm dev
 ```
 
-The app runs at http://localhost:5173.
+The app runs at http://localhost:3000. `pnpm --filter web build` and `pnpm --filter web start` build and serve the production version.
 
 ### Local chain
 
@@ -43,7 +43,7 @@ pnpm chain
 ```
 
 starts anvil at `http://127.0.0.1:8545` (chain id 31337) with 2-second blocks, so the pending state of a
-transaction is visible. Set `VITE_LOCAL_CHAIN=true` to add it to the network list. anvil runs with
+transaction is visible. Set `NEXT_PUBLIC_LOCAL_CHAIN=true` to add it to the network list. anvil runs with
 `--auto-impersonate`, so the mock wallet can send from any address. Give it 100 ETH with
 
 ```bash
@@ -57,10 +57,10 @@ or use one of the pre-funded anvil accounts it prints on start.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `VITE_WALLETCONNECT_PROJECT_ID` | no | [Reown](https://dashboard.reown.com) project id. Enables WalletConnect (QR code, mobile wallets), MetaMask, Rabby and Coinbase Wallet entries. Without it only the browser-extension wallet is offered. |
-| `VITE_SEPOLIA_RPC_URL` | recommended | Private Sepolia RPC (Alchemy, Infura, …; free tiers are enough). Keyless public Sepolia nodes throttle and go down often; they are only a fallback. |
-| `VITE_MOCK_WALLET_ADDRESS` | no | Dev only. Adds a read-only **Mock wallet (dev)** to the connect modal that pretends to own this address — for checking the UI without a browser wallet and for e2e tests. It cannot sign on public networks and is not remembered across reloads. |
-| `VITE_LOCAL_CHAIN` | no | Dev only. `true` adds the local anvil chain to the network list. |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | no | [Reown](https://dashboard.reown.com) project id. Enables WalletConnect (QR code, mobile wallets), MetaMask, Rabby and Coinbase Wallet entries. Without it only the browser-extension wallet is offered. |
+| `NEXT_PUBLIC_SEPOLIA_RPC_URL` | recommended | Private Sepolia RPC (Alchemy, Infura, …; free tiers are enough). Keyless public Sepolia nodes throttle and go down often; they are only a fallback. |
+| `NEXT_PUBLIC_MOCK_WALLET_ADDRESS` | no | Dev only. Adds a read-only **Mock wallet (dev)** to the connect modal that pretends to own this address — for checking the UI without a browser wallet and for e2e tests. It cannot sign on public networks and is not remembered across reloads. |
+| `NEXT_PUBLIC_LOCAL_CHAIN` | no | Dev only. `true` adds the local anvil chain to the network list. |
 
 ### Test funds
 
@@ -85,7 +85,8 @@ Unit tests cover amount parsing and formatting, error messages, transaction stag
 parser and the chain and token config.
 
 End-to-end tests drive the real app in Google Chrome (`channel: 'chrome'`, no browser download) with the mock
-wallet. Playwright starts anvil and a Vite server on port 5174 by itself.
+wallet. Playwright starts anvil and its own `next dev` on port 3100 (building into `.next-e2e`, so it runs next to
+`pnpm dev`). Every test also fails on React hydration errors and uncaught page exceptions.
 
 ```bash
 pnpm --filter web e2e:local   # deterministic: anvil only
@@ -94,6 +95,16 @@ pnpm e2e                      # also the @network tests against Sepolia, Calibra
 
 ## Notes
 
+- **SSR and the wallet state.** wagmi runs with `ssr: true` and cookie storage. The root layout reads the
+  cookie with `cookieToInitialState`, so a returning user is rendered as "reconnecting" on the server and the
+  first client render matches it, without a hydration mismatch or a flash of the disconnected state.
+  RainbowKit is client-only, so the config is split: `config/wagmi.ts` (chains, transports, storage; safe on
+  the server) and `config/connectors.ts` (RainbowKit wallets, used by the client providers).
+- **Coinbase SDK in SSR.** RainbowKit's Base Account connector brings the Coinbase CDP SDK into the server
+  bundle, and its x402 helpers lazily import optional peers that are not installed. Turbopack cannot resolve
+  them, so the SDK is listed in `serverExternalPackages` and loaded from `node_modules` at runtime.
+- **Plain `<img>` for NFTs.** NFT media lives on arbitrary hosts; `next/image` would need every host
+  allow-listed or would turn the server into an open image proxy.
 - **Public RPCs.** viem's default Sepolia RPC (thirdweb) rate-limits keyless browser requests and returns the 429
   without CORS headers, so the Sepolia chain definition uses public nodes instead, and the transport falls back
   between them, re-ranking them by latency and uptime every minute (`apps/web/src/config`). The default RPC

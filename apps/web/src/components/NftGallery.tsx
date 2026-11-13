@@ -71,6 +71,8 @@ function NftCard({ nft, href }: { nft: Nft; href: string }) {
     <li>
       <a className="nft-card" href={href} target="_blank" rel="noreferrer" data-testid="nft-card">
         {nft.imageUrl && !imageFailed ? (
+          // NFT media lives on arbitrary hosts; next/image would turn the server into an open image proxy.
+          // eslint-disable-next-line nextjs/no-img-element
           <img
             className="nft-card__image"
             src={nft.imageUrl}

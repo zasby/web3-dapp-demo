@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { faucetUrls, localChain, supportedChains } from './chains'
 
-// The local anvil chain joins the list only when VITE_LOCAL_CHAIN is set, e.g. in .env.local.
+// The local anvil chain joins the list only in development with NEXT_PUBLIC_LOCAL_CHAIN=true.
 const publicChains = supportedChains.filter((chain) => chain.id !== localChain.id)
 
 describe('chains', () => {

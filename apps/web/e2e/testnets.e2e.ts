@@ -1,6 +1,5 @@
-import { expect, test } from '@playwright/test'
 
-import { card, connectMockWallet, switchNetwork } from './fixtures.ts'
+import { card, connectMockWallet, expect, switchNetwork, test } from './fixtures.ts'
 
 // Reads public testnet RPCs and Blockscout, so results depend on the network being up.
 test.describe('public testnets', { tag: '@network' }, () => {
