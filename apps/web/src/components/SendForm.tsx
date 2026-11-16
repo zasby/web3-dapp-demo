@@ -1,12 +1,19 @@
 import { useAddRecentTransaction } from '@rainbow-me/rainbowkit'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useEffect, useState } from 'react'
-import { type Address, erc20Abi, formatUnits, isAddress } from 'viem'
-import { useBalance, useConfig, useWaitForTransactionReceipt } from 'wagmi'
+import { type Address, encodeFunctionData, erc20Abi, formatUnits, isAddress } from 'viem'
+import {
+  useBalance,
+  useConfig,
+  useEstimateFeesPerGas,
+  useEstimateGas,
+  useWaitForTransactionReceipt,
+} from 'wagmi'
 import { sendTransaction, simulateContract, writeContract } from 'wagmi/actions'
 
 import type { SupportedChain } from '../config/chains'
 import type { TokenBalance, TokenRow } from '../hooks/useTokenBalances'
+import { getFeeEstimate } from '../lib/fee'
 import { formatTokenAmount, parseTokenAmount } from '../lib/format'
 import { getRecipientError } from '../lib/recipient'
 import { getTransactionStage } from '../lib/transaction'
@@ -86,6 +93,26 @@ export function SendForm({ address, chain, tokens }: Props) {
           ? `Not enough ${asset.symbol}`
           : undefined
   const isBusy = stage === 'signing' || stage === 'pending'
+
+  // Estimate the exact call the form would send, only once it is valid, so typing does not spam the RPC.
+  const canEstimate = isAddress(recipient) && !recipientError && Boolean(value) && !amountError
+  const gas = useEstimateGas({
+    chainId: chain.id,
+    account: address,
+    ...(asset.kind === 'native'
+      ? { to: canEstimate ? recipient : undefined, value }
+      : {
+          to: asset.address,
+          data: canEstimate
+            ? encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [recipient as Address, value ?? 0n] })
+            : undefined,
+        }),
+    query: { enabled: canEstimate },
+  })
+  const fees = useEstimateFeesPerGas({ chainId: chain.id, query: { enabled: canEstimate } })
+  const fee = canEstimate
+    ? getFeeEstimate({ gas: gas.data, maxFeePerGas: fees.data?.maxFeePerGas, gasPrice: fees.data?.gasPrice })
+    : undefined
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -167,6 +194,12 @@ export function SendForm({ address, chain, tokens }: Props) {
           </span>
           {amountError && <span className="form__error">{amountError}</span>}
         </label>
+
+        {fee !== undefined && (
+          <p className="form__fee">
+            Network fee ≈ {formatTokenAmount(fee, chain.nativeCurrency.decimals, 6)} {chain.nativeCurrency.symbol}
+          </p>
+        )}
 
         <button
           type="submit"

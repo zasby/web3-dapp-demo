@@ -276,6 +276,12 @@ a {
   color: var(--error-text);
 }
 
+.form__fee {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
 .input {
   width: 100%;
   min-width: 0;
