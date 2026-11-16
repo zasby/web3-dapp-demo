@@ -9,7 +9,9 @@ coverage
 .idea
 .vscode/*
 !.vscode/extensions.json
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/commands/
 test-results
 playwright-report
 .next

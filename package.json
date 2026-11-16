@@ -12,7 +12,9 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "e2e": "pnpm --filter web e2e"
+    "e2e": "pnpm --filter web e2e",
+    "check:scope": "node scripts/scope-check.mjs",
+    "check": "pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web test && pnpm check:scope"
   },
   "devDependencies": {
     "@foundry-rs/anvil": "^1.7.1"
