@@ -8,6 +8,7 @@ import { sendTransaction, simulateContract, writeContract } from 'wagmi/actions'
 import type { SupportedChain } from '../config/chains'
 import type { TokenBalance, TokenRow } from '../hooks/useTokenBalances'
 import { formatTokenAmount, parseTokenAmount } from '../lib/format'
+import { getRecipientError } from '../lib/recipient'
 import { getTransactionStage } from '../lib/transaction'
 import { TransactionStatus } from './TransactionStatus'
 
@@ -74,7 +75,7 @@ export function SendForm({ address, chain, tokens }: Props) {
   }, [receipt.isSuccess, queryClient])
 
   const value = parseTokenAmount(amount, asset.decimals)
-  const recipientError = recipient && !isAddress(recipient) ? 'Not a valid address' : undefined
+  const recipientError = getRecipientError(recipient, address)
   const amountError = !amount
     ? undefined
     : value === undefined
@@ -88,7 +89,7 @@ export function SendForm({ address, chain, tokens }: Props) {
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
-    if (isBusy || !isAddress(recipient) || !value || amountError) return
+    if (isBusy || !isAddress(recipient) || recipientError || !value || amountError) return
     transfer.mutate({ asset, to: recipient, value, description: `Send ${amount.trim()} ${asset.symbol}` })
   }
 
@@ -170,7 +171,7 @@ export function SendForm({ address, chain, tokens }: Props) {
         <button
           type="submit"
           className="button button--primary"
-          disabled={isBusy || !isAddress(recipient) || !value || Boolean(amountError)}
+          disabled={isBusy || !isAddress(recipient) || Boolean(recipientError) || !value || Boolean(amountError)}
         >
           {isBusy ? 'Sending…' : `Send ${asset.symbol}`}
         </button>
