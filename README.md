@@ -115,6 +115,16 @@ browser ──/api/*──▶ Next.js (rewrite) ──▶ NestJS API
 - Nonces and sessions live in memory for now: fine for one instance, lost on restart. The API refuses to start in
   production on in-memory session storage; stage 5 moves both to PostgreSQL.
 
+## Development workflow
+
+Changes are made by a coding agent (Claude Code) under the rules in [`AGENTS.md`](AGENTS.md): an OpenSpec
+change first (`openspec/`), its own worktree and branch, the owner's approval of the plan, `pnpm check`
+after every task group (it also fails when the branch touches files the proposal did not declare), then an
+agent review with the [`review-change`](.claude/skills/review-change/SKILL.md) skill before the owner
+reviews and merges. The review checks the diff against the change's scenarios and tasks, the code rules and
+the checks it runs itself, and leaves a `review.md` with evidence-backed findings and a verdict next to the
+change.
+
 ## Testing
 
 Unit tests cover amount parsing and formatting, error messages, transaction stages, the Blockscout response

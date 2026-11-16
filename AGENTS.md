@@ -23,7 +23,10 @@ and reviews every change; the agent implements and verifies.
 6. **Checks after every task group.** Run `pnpm check` (typecheck, lint, unit tests, scope check).
    Fix failures yourself until the checks are green. If the same failure survives three attempts,
    stop and ask the owner instead of working around it.
-7. **Review and archive.** The owner reviews the diff. After merge, archive the change with
+7. **Agent review.** Before handing the change over, run the `review-change` skill. It saves
+   `openspec/changes/<change-id>/review.md` with findings and a verdict; fix every blocker and major
+   finding and re-run it until the verdict is "approve".
+8. **Review and archive.** The owner reviews the diff. After merge, archive the change with
    `/opsx:archive` so its specs move into `openspec/specs/`.
 
 ## Code rules
